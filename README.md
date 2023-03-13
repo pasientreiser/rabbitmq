@@ -2,7 +2,7 @@
 ## Introduksjon
 Følgende dokument har som formål å dokumentere transportørers bruk av RabbitMQ i SUTI-kommunikasjon mot NISSY og CTRL.
 
-Arkitekturmessig er meldingsflyten tilsvarende slik det tidligere fungerte med SonicMQ. SUTI-meldinger fra NISSY og CTRL sendes til transportør-spesifikke utgående køer, og meldinger fra transportører til NISSY og CTRL sendes til én felles inngående kø.
+Meldingsflyten er tilsvarende slik det tidligere har fungert med SonicMQ. SUTI-meldinger fra NISSY/CTRL sendes til transportør-spesifikke utgående køer, og meldinger fra transportører til NISSY/CTRL sendes til én felles inngående kø.
 
 RabbitMQ er et åpent kildekode-prosjekt som er basert på AMQP-protokollen. Både biblioteker og dokumentasjon er åpent tilgjengelig på prosjektets nettside (https://www.rabbitmq.com/).
 Dette dokumentet er derfor  begrenset til å inneholde informasjon om kønavn og egenskaper som skal til for å koble seg til, hente ut, og sende inn meldinger til Pasientreisers RabbitMQ-tjeneste.
@@ -22,7 +22,7 @@ Brukernavn og passord oversendes personen som er oppgitt som teknisk ansvarlig i
 | **VHost** | nissy / ctrl |
 
 
-```
+```python
 def connect():
     credentials = pika.PlainCredentials('pasientreiser0002.918695079', '<passord>')
     context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
@@ -59,7 +59,7 @@ Meldinger som sendes til NISSY eller CTRL er satt opp med en utvekslingstype som
 
 For å verifisere at meldinger har blitt publisert på riktig kø, er det anbefalt at klienter benytter “Publisher confirms". På nettsiden til RabbitMQ er konseptet godt forklart (https://www.rabbitmq.com/confirms.html).
 
-```
+```python
 def publish(connection):
     channel = connection.channel()
     channel.confirm_delivery()
@@ -82,13 +82,15 @@ For å unngå tap av data ved driftsstans er det ved uthenting av meldinger fra 
 ```python
 def consume(channel):
 
-    def callback(ch, method, properties, body):
+    def callback(channel, method, properties, body):
         print(body.decode("utf-8"))
+        channel.basic_ack(delivery_tag = method.delivery_tag) # Bekreft mottak
+        
     
-        channel.basic_consume(queue='nissy.out.rmr.pastrans0002.918695079',
-                            auto_ack=True,
-                            on_message_callback=callback)
-        channel.start_consuming()
+    channel.basic_consume(queue='nissy.out.rmr.pastrans0002.918695079',
+                          auto_ack=False,
+                          on_message_callback=callback)
+    channel.start_consuming()
 ```
 
 # SUTI Metadata
@@ -112,7 +114,7 @@ Ved overgang til ny kø må man oppdatere “SUTI link” i meldingens metadata 
 </orgReceiver>
 ```
 
-I tillegg er det for CTRL viktig at organisasjonsnummeret til transportøren i kønavnet samsvarer med det som er oppgitt i SUTI-meldingens `orgProvider.idOrg.id`-element. Dette grunnet at Ctrl skal kunne utlede hvilken kø som skal benyttes for å sende svar.
+I tillegg er det for CTRL viktig at organisasjonsnummeret til transportøren i kønavnet samsvarer med det som er oppgitt i SUTI-meldingens `orgProvider.idOrg.id`-element. Dette grunnet at Ctrl benytter dette elementet til å utlede hvilken transportørkø det skal sendes svar til.
 ```xml
 <orgProvider orgName="Oslo Taxi AS">
 <idOrg src="NO:idOrg" id="972413615" />
