@@ -94,7 +94,7 @@ def consume(channel):
 ```
 
 # SUTI Metadata
-Ved overgang til ny kø må man oppdatere “SUTI link” i meldingens metadata til å inneholde den siste delen av det nye kønavnet, altså <leverandør>. Eksempel: "tds0001.980650170".
+Ved overgang til ny kø må man oppdatere “SUTI link” i meldingens metadata til å inneholde den nest siste delen av det nye kønavnet, altså <leverandør><løpenummer>. Eksempel: Dersom kønavn er "nissy.out.rmr.tds0001.980650170" vil SUTI-link være "tds0001".
 
 ```xml
 # NISSY
