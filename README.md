@@ -32,8 +32,10 @@ def connect():
             port='5671',
             virtual_host='nissy',
             credentials=credentials,
-            ssl_options=pika.SSLOptions(context)
-        )
+            ssl_options=pika.SSLOptions(context),
+            client_properties={
+                'connection_name': 'Pasientreisers taksametersystem',
+        })
     )
 ```
 
@@ -66,7 +68,7 @@ def publish(connection):
     
     try: 
         channel.basic_publish(exchange='',
-          routing_key='nissy.out.rmr.pasientreiser0002.918695079',
+          routing_key='nissy.in.rmr.sutiapprec',
           body=suti_msg_2001, # UTF-8
           properties=pika.BasicProperties(content_type='text/plain', delivery_mode=pika.DeliveryMode.Transient))
           print("Melding publisert på køen")
