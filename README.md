@@ -16,9 +16,9 @@ Brukernavn og passord oversendes personen som er oppgitt som teknisk ansvarlig i
 | **Egenskap** |   **Verdi**   |
 |-----|-----|
 |   **Protokoll**  |  AMQPS   |
-| **Host** | rabbitmq.nhn.no |
+| **Host** | suti.test.pasientreiser.nhn.no |
 | **Port** | 5671 |
-| **SSL** | TLS v1.2 |
+| **SSL** | TLS v1.2+ |
 | **VHost** | nissy / ctrl |
 
 
