@@ -13,13 +13,13 @@ Kodeeksemplene i dokumentet er skrevet i Python og benytter biblioteket pika (ht
 ## Tilkoblingsinformasjon
 Brukernavn og passord oversendes personen som er oppgitt som teknisk ansvarlig i bestillingsskjemaet. Systemets eksterne IP-adresser må være forhåndsgodkjent av Norsk Helsenett for at det kan etableres kontakt mot tjenesten.
 
-| **Egenskap** |   **Verdi**   |
-|-----|-----|
-|   **Protokoll**  |  AMQPS   |
-| **Host** | suti.test.pasientreiser.nhn.no |
-| **Port** | 5671 |
-| **SSL** | TLS v1.2+ |
-| **VHost** | nissy / ctrl |
+| **Egenskap** | **Verdi i Test** | **Verdi i QA** | **Verdi i Produksjon** | 
+|-----|-----|-----|-----|
+| **Protokoll**  |  AMQPS   |  AMQPS   |  AMQPS   |
+| **Port** | 5671 | 5671 | 5671 |
+| **SSL** | TLS v1.2+ | TLS v1.2+ | TLS v1.2+ |
+| **VHost** | nissy / ctrl | nissy / ctrl | nissy / ctrl |
+| **Host Test** | suti.test.pasientreiser.nhn.no |  suti.qa.pasientreiser.nhn.no | suti.pasientreiser.nhn.no |
 
 
 ```python
@@ -96,18 +96,20 @@ def consume(channel):
 ```
 
 # SUTI Metadata
-Ved overgang til ny kø må man oppdatere “SUTI link” i meldingens metadata til å inneholde den nest siste delen av det nye kønavnet, altså <leverandør><løpenummer>. Eksempel: Dersom kønavn er "nissy.out.rmr.tds0001.980650170" vil SUTI-link være "tds0001".
+## NISSY
+Ved overgang til RabbitMQ mot NISSY er det ikke nødvendig å gjøre endringer i SUTI metadata. 
+
+Meldinger som sendes fra NISSY vil ha samme verdier i orgSender som med SonicMQ. Det er mulig å konfigurere andre verdier i orgReceiver om ønskelig.
+```xml
+<orgSender name="Locus">
+  <idOrg src="SUTI:idLink" id="Locus_PasientTransport_0001" />
+</orgSender>
+```
+
+## CTRL
+Ved overgang til RabbitMQ mot CTRL må man oppdatere “SUTI link” i meldingens metadata til å inneholde den nest siste delen av det nye kønavnet, altså <leverandør><løpenummer>. Eksempel: Dersom kønavn er "nissy.out.rmr.tds0001.980650170" vil SUTI-link være "tds0001".
 
 ```xml
-# NISSY
-<orgSender name="Tds">
-  <idOrg src="SUTI:idLink" id="tds0001" />
-</orgSender>
-<orgReceiver name="Pasientreiser">
-  <idOrg src="SUTI:idLink" id="pasientreiser_nissy" />
-</orgReceiver>
-
-# CTRL
 <orgSender name="Tds">
   <idOrg src="SUTI:idLink" id="tds0001" />
 </orgSender>
@@ -116,10 +118,9 @@ Ved overgang til ny kø må man oppdatere “SUTI link” i meldingens metadata 
 </orgReceiver>
 ```
 
-I tillegg er det for CTRL viktig at organisasjonsnummeret til transportøren i kønavnet samsvarer med det som er oppgitt i SUTI-meldingens `orgProvider.idOrg.id`-element. Dette grunnet at Ctrl benytter dette elementet til å utlede hvilken transportørkø det skal sendes svar til.
+I tillegg er det viktig at organisasjonsnummeret til transportøren i kønavnet samsvarer med det som er oppgitt i SUTI-meldingens `orgProvider.idOrg.id`-element. Dette grunnet at Ctrl benytter dette elementet til å utlede hvilken transportørkø det skal sendes svar til.
 ```xml
 <orgProvider orgName="Oslo Taxi AS">
 <idOrg src="NO:idOrg" id="972413615" />
 </orgProvider>
 ```
-
